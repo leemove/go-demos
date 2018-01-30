@@ -1,7 +1,10 @@
 package main
 
+import (
+	"fmt"
+)
+
 func main() {
-	i := 2
-	p := &i
-	print(*p)
+	str := '\u4e16'
+	fmt.Print(str)
 }
