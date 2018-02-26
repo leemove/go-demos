@@ -18,6 +18,7 @@ func main() {
 			log.Fatal(err)
 			continue
 		}
+		// 每一个请求都进行同样的处理 而不是堵塞
 		go handleConn(conn)
 	}
 }
