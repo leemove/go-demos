@@ -12,6 +12,7 @@ import (
 
 var verbose = flag.Bool("p", true, "查看进度")
 var sema = make(chan struct{}, 20)
+var done = make(chan struct{})
 
 func main() {
 	var tick <-chan time.Time
@@ -27,6 +28,12 @@ func main() {
 		roots = []string{"."}
 	}
 	fileSizes := make(chan int64)
+
+	go func() {
+		os.Stdin.Read(make([]byte, 1))
+		close(done)
+	}()
+
 	go func(roots []string) {
 		for _, root := range roots {
 			n.Add(1)
@@ -49,6 +56,11 @@ func main() {
 loop:
 	for {
 		select {
+		case <-done:
+			for range fileSizes {
+
+			}
+			return
 		case size, ok := <-fileSizes:
 			if !ok {
 				break loop
@@ -64,6 +76,9 @@ loop:
 
 func walkDir(dir string, fileSizes chan<- int64, n *sync.WaitGroup) {
 	defer n.Done()
+	if canceled() {
+		return
+	}
 	for _, entry := range dirents(dir) {
 		if entry.IsDir() {
 			n.Add(1)
@@ -76,10 +91,14 @@ func walkDir(dir string, fileSizes chan<- int64, n *sync.WaitGroup) {
 }
 
 func dirents(dir string) []os.FileInfo {
-	sema <- struct{}{}
-	defer func() {
-		<-sema
-	}()
+	select {
+	case <-done:
+		return nil
+	case sema <- struct{}{}:
+		defer func() {
+			<-sema
+		}()
+	}
 	entries, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "du1: %v\n", err)
@@ -90,4 +109,13 @@ func dirents(dir string) []os.FileInfo {
 
 func printDiskUsage(nfiles, nbytes int64) {
 	fmt.Printf("%d个文件, %.1f GB\n", nfiles, float64(nbytes)/1e9)
+}
+
+func canceled() bool {
+	select {
+	case <-done:
+		return true
+	default:
+		return false
+	}
 }
