@@ -27,16 +27,17 @@ func main() {
 		abort <- struct{}{}
 	}()
 	fmt.Println("开始倒计时,enter键取消倒计时")
-	tick := time.Tick(1 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	for countdown := 10; countdown > 0; countdown-- {
 		select {
-		case <-tick:
+		case <-ticker.C:
 			fmt.Println(countdown)
 		case <-abort:
 			fmt.Println("倒计时被取消")
 			return
 		}
 	}
+	ticker.Stop()
 	launch()
 }
 
