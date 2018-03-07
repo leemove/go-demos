@@ -18,7 +18,7 @@ func (sq *Square) Area() float32 {
 func main() {
 	sql1 := new(Square)
 	sql1.side = 5
-	var areaInfo Shaper
-	areaInfo = sql1
-	fmt.Println(areaInfo.Area())
+	// var areaInfo Shaper
+	// areaInfo = sql1
+	fmt.Println(sql1.Area())
 }
